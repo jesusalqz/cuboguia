@@ -1,5 +1,5 @@
 // Service worker: todo en caché para funcionar sin internet.
-const CACHE = 'cuboguia-v1';
+const CACHE = 'cuboguia-v2';
 const ASSETS = [
   './', 'index.html', 'styles.css', 'manifest.webmanifest',
   'assets/icon.svg', 'assets/icon-192.png', 'assets/icon-512.png',
@@ -25,11 +25,12 @@ self.addEventListener('fetch', e => {
   e.respondWith((async () => {
     const c = await caches.open(CACHE);
     try {
-      const res = await fetch(e.request, { cache: 'reload' });
+      const nav = e.request.mode === 'navigate';
+      const res = await fetch(nav ? e.request.url : e.request, { cache: 'reload' });
       if (res.ok) c.put(e.request, res.clone());
       return res;
     } catch {
-      return (await c.match(e.request, { ignoreSearch: true })) || (await c.match('index.html'));
+      return (await c.match(e.request, { ignoreSearch: true })) || (await c.match('index.html')) || (await c.match('./'));
     }
   })());
 });
