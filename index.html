@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>CuboGuía</title>
+  <meta name="description" content="Aprende a resolver tu cubo de Rubik paso a paso a partir de fotos de sus caras.">
+  <meta name="theme-color" content="#0B0D12">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="assets/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="assets/icon-192.png">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div id="app">
+
+  <!-- INICIO -->
+  <section class="screen active" id="s-home">
+    <div class="home-hero">
+      <div class="cube-stage" id="home-cube"></div>
+      <h1 class="brand">Cubo<span>Guía</span></h1>
+      <p class="lead">Escanea tu cubo de Rubik y te guío movimiento por movimiento hasta resolverlo.</p>
+    </div>
+    <div class="home-actions">
+      <button class="btn primary big" data-go="camera"><svg class="ic"><use href="#i-camera"/></svg>Escanear con cámara</button>
+      <button class="btn secondary big" data-go="upload"><svg class="ic"><use href="#i-image"/></svg>Subir fotos</button>
+      <div class="row2">
+        <button class="btn ghost" data-go="history"><svg class="ic"><use href="#i-clock"/></svg>Historial</button>
+        <button class="btn ghost" data-go="settings"><svg class="ic"><use href="#i-gear"/></svg>Ajustes</button>
+      </div>
+      <button class="link" id="btn-practice">Probar con un cubo revuelto de ejemplo</button>
+    </div>
+  </section>
+
+  <!-- INSTRUCCIONES -->
+  <section class="screen" id="s-intro">
+    <header class="bar"><button class="icon-btn" data-back aria-label="Volver"><svg class="ic"><use href="#i-back"/></svg></button><h2>Antes de empezar</h2></header>
+    <div class="scroll pad">
+      <div class="card tips">
+        <h3>Tomarás 6 fotos, una por cara</h3>
+        <ol class="steps-list">
+          <li>Empieza con el centro <b class="chip-c green">verde</b> mirando a la cámara y el <b class="chip-c yellow">amarillo</b> arriba.</li>
+          <li>Gira el cubo hacia la izquierda para las caras naranja, azul y roja (amarillo siempre arriba).</li>
+          <li>Luego la cara amarilla (azul arriba) y la blanca (verde arriba).</li>
+        </ol>
+        <h3>Consejos de luz</h3>
+        <ul class="steps-list">
+          <li>Usa luz uniforme, de día si es posible.</li>
+          <li>Evita reflejos y sombras sobre los stickers.</li>
+          <li>Llena la cuadrícula con la cara, de frente.</li>
+        </ul>
+      </div>
+    </div>
+    <footer class="foot"><button class="btn primary big" id="btn-intro-go">Entendido</button></footer>
+  </section>
+
+  <!-- CAPTURA -->
+  <section class="screen dark" id="s-capture">
+    <header class="bar overlay"><button class="icon-btn" data-back aria-label="Volver"><svg class="ic"><use href="#i-back"/></svg></button>
+      <div class="face-dots" id="face-dots"></div>
+      <button class="icon-btn" id="btn-torch" aria-label="Linterna" hidden><svg class="ic"><use href="#i-bolt"/></svg></button>
+    </header>
+    <div class="cam-wrap" id="cam-wrap">
+      <video id="cam-video" playsinline muted autoplay></video>
+      <canvas id="up-canvas" hidden></canvas>
+      <div class="grid-overlay" id="grid-overlay"><div class="g-cells" id="g-cells"></div></div>
+      <div class="handles" id="handles" hidden></div>
+      <div class="cam-msg" id="cam-msg" hidden></div>
+    </div>
+    <div class="capture-panel">
+      <div class="face-guide">
+        <svg class="mini-face" id="mini-face" viewBox="0 0 64 64" aria-hidden="true"></svg>
+        <p id="face-text"></p>
+      </div>
+      <div class="cap-actions">
+        <button class="btn ghost" id="btn-prev-face">Anterior</button>
+        <label class="btn secondary" id="btn-pick" hidden><input type="file" accept="image/*" id="file-input" hidden>Elegir foto</label>
+        <button class="btn primary big" id="btn-shot">Capturar cara</button>
+      </div>
+      <label class="toggle small" id="auto-wrap"><input type="checkbox" id="auto-capture"><span></span>Captura automática</label>
+    </div>
+  </section>
+
+  <!-- REVISIÓN -->
+  <section class="screen" id="s-review">
+    <header class="bar"><button class="icon-btn" data-back aria-label="Volver"><svg class="ic"><use href="#i-back"/></svg></button><h2>Revisa tu cubo</h2></header>
+    <div class="scroll pad">
+      <p class="muted">Toca una casilla si el color está mal. Las casillas con borde punteado son dudosas.</p>
+      <div class="net" id="net"></div>
+      <div class="counts" id="counts"></div>
+      <div class="errors" id="errors"></div>
+      <div class="cube-stage small" id="review-cube"></div>
+      <p class="muted center">Arrastra el cubo para verlo por todos lados.</p>
+      <div class="redo" id="redo"></div>
+    </div>
+    <footer class="foot"><button class="btn primary big" id="btn-solve">Resolver</button></footer>
+    <div class="palette" id="palette" hidden></div>
+  </section>
+
+  <!-- MODO -->
+  <section class="screen" id="s-mode">
+    <header class="bar"><button class="icon-btn" data-back aria-label="Volver"><svg class="ic"><use href="#i-back"/></svg></button><h2>¿Cómo quieres resolverlo?</h2></header>
+    <div class="scroll pad mode-list">
+      <button class="mode-card" data-mode="learn">
+        <span class="mode-ic"><svg class="ic"><use href="#i-book"/></svg></span>
+        <span class="mode-t">Aprender</span>
+        <span class="mode-d">Método por capas en 8 etapas. Entenderás cada paso.</span>
+        <span class="mode-n" id="n-learn">≈ 120 movimientos</span>
+      </button>
+      <button class="mode-card" data-mode="fast">
+        <span class="mode-ic fast"><svg class="ic"><use href="#i-bolt"/></svg></span>
+        <span class="mode-t">Rápido</span>
+        <span class="mode-d">La solución más corta. Solo sigue las instrucciones.</span>
+        <span class="mode-n" id="n-fast">≈ 20 movimientos</span>
+      </button>
+      <p class="muted center" id="mode-status"></p>
+    </div>
+  </section>
+
+  <!-- REPRODUCTOR -->
+  <section class="screen" id="s-player">
+    <header class="bar">
+      <button class="icon-btn" data-back aria-label="Salir"><svg class="ic"><use href="#i-close"/></svg></button>
+      <div class="timer" id="timer">0:00</div>
+      <div class="bar-r">
+        <button class="icon-btn" id="btn-list" aria-label="Lista de movimientos"><svg class="ic"><use href="#i-list"/></svg></button>
+        <button class="icon-btn" id="btn-help" aria-label="Notación"><svg class="ic"><use href="#i-help"/></svg></button>
+      </div>
+    </header>
+    <div class="progress" id="progress"></div>
+    <div class="player-cube">
+      <div class="cube-stage" id="player-cube"></div>
+      <button class="chip-btn view-reset" id="btn-view" aria-label="Restablecer vista"><svg class="ic"><use href="#i-rotate"/></svg>Vista</button>
+    </div>
+    <div class="step-card glass" id="step-card">
+      <div class="step-top"><span class="stage-name" id="stage-name"></span><span class="step-count" id="step-count"></span></div>
+      <div class="move-row"><div class="move-big" id="move-big"></div><div class="move-text" id="move-text"></div></div>
+      <p class="hint" id="hint"></p>
+      <div class="controls">
+        <button class="ctl" id="btn-back" aria-label="Paso anterior"><svg class="ic"><use href="#i-prev"/></svg></button>
+        <button class="ctl" id="btn-replay" aria-label="Repetir animación"><svg class="ic"><use href="#i-replay"/></svg></button>
+        <button class="ctl main" id="btn-next" aria-label="Hecho, siguiente"><svg class="ic"><use href="#i-next"/></svg><span>Hecho</span></button>
+        <button class="ctl" id="btn-play" aria-label="Reproducir automático"><svg class="ic"><use href="#i-play"/></svg></button>
+        <button class="ctl speed" id="btn-speed" aria-label="Velocidad">1×</button>
+      </div>
+    </div>
+    <div class="sheet" id="list-sheet" hidden><div class="sheet-in"><div class="sheet-h"><h3>Todos los movimientos</h3><button class="icon-btn" data-close-sheet aria-label="Cerrar"><svg class="ic"><use href="#i-close"/></svg></button></div><div class="move-list" id="move-list"></div></div></div>
+  </section>
+
+  <!-- RESUELTO -->
+  <section class="screen" id="s-done">
+    <div class="done-wrap">
+      <div class="cube-stage" id="done-cube"></div>
+      <h1>¡Resuelto!</h1>
+      <div class="stats">
+        <div><span id="d-time">0:00</span><small>tiempo</small></div>
+        <div><span id="d-moves">0</span><small>movimientos</small></div>
+        <div><span id="d-mode">—</span><small>modo</small></div>
+      </div>
+      <p class="muted" id="d-best"></p>
+    </div>
+    <footer class="foot col">
+      <button class="btn primary big" data-go="camera">Resolver otro cubo</button>
+      <div class="row2"><button class="btn ghost" id="btn-share">Compartir</button><button class="btn ghost" data-go="home">Inicio</button></div>
+    </footer>
+  </section>
+
+  <!-- HISTORIAL -->
+  <section class="screen" id="s-history">
+    <header class="bar"><button class="icon-btn" data-back aria-label="Volver"><svg class="ic"><use href="#i-back"/></svg></button><h2>Historial</h2><button class="link danger" id="btn-clear-hist">Borrar todo</button></header>
+    <div class="scroll pad"><div id="hist-list" class="hist-list"></div></div>
+  </section>
+
+  <!-- AJUSTES -->
+  <section class="screen" id="s-settings">
+    <header class="bar"><button class="icon-btn" data-back aria-label="Volver"><svg class="ic"><use href="#i-back"/></svg></button><h2>Ajustes</h2></header>
+    <div class="scroll pad">
+      <div class="card settings">
+        <label class="set-row"><span>Velocidad de animación</span>
+          <select id="set-speed"><option value="0.5">0.5×</option><option value="1">1×</option><option value="1.5">1.5×</option><option value="2">2×</option></select></label>
+        <label class="set-row toggle"><span>Modo daltónico (letras en los stickers)</span><input type="checkbox" id="set-labels"><span></span></label>
+        <label class="set-row toggle"><span>Vibrar al cambiar de paso</span><input type="checkbox" id="set-vibrate"><span></span></label>
+        <label class="set-row toggle"><span>Captura automática</span><input type="checkbox" id="set-auto"><span></span></label>
+      </div>
+      <div class="card">
+        <h3>Letras del modo daltónico</h3>
+        <p class="muted">B = Blanco · A = Amarillo · R = Rojo · N = Naranja · Z = Azul · V = Verde</p>
+      </div>
+      <button class="btn ghost danger full" id="btn-wipe">Borrar todos los datos</button>
+      <p class="muted small center">CuboGuía v1.0 · funciona sin internet. Tus fotos nunca salen del teléfono.</p>
+    </div>
+  </section>
+
+  <!-- MODALES -->
+  <div class="modal" id="m-stage" hidden>
+    <div class="modal-in">
+      <div class="badge-ok"><svg class="ic"><use href="#i-check"/></svg></div>
+      <h3 id="ms-title">¡Etapa completada!</h3>
+      <p id="ms-text"></p>
+      <p class="muted" id="ms-next"></p>
+      <button class="btn primary full" id="ms-continue">Continuar</button>
+      <button class="link" id="ms-wrong">Mi cubo no se ve así</button>
+    </div>
+  </div>
+
+  <div class="modal" id="m-help" hidden>
+    <div class="modal-in wide">
+      <h3>Cómo leer los movimientos</h3>
+      <p class="muted">Siempre miras el cubo de frente. Cada letra es una cara:</p>
+      <div class="notation" id="notation"></div>
+      <button class="btn primary full" data-close-modal>Entendido</button>
+    </div>
+  </div>
+
+  <div class="modal" id="m-confirm" hidden>
+    <div class="modal-in">
+      <h3 id="mc-title"></h3>
+      <p id="mc-text"></p>
+      <div class="row2"><button class="btn ghost" id="mc-no">Cancelar</button><button class="btn primary" id="mc-yes">Aceptar</button></div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" hidden></div>
+</div>
+
+<!-- Iconos (estilo línea) -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-camera" viewBox="0 0 24 24"><path d="M14.5 4h-5L7.5 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3.5z"/><circle cx="12" cy="13" r="3.5"/></symbol>
+    <symbol id="i-image" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+    <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></symbol>
+    <symbol id="i-back" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></symbol>
+    <symbol id="i-close" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+    <symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13 2 3 14h9l-1 8 10-12h-9z"/></symbol>
+    <symbol id="i-book" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5z"/><path d="M4 19.5A2.5 2.5 0 0 0 6.5 22H20v-5"/></symbol>
+    <symbol id="i-list" viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></symbol>
+    <symbol id="i-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3M12 17h.01"/></symbol>
+    <symbol id="i-rotate" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></symbol>
+    <symbol id="i-prev" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></symbol>
+    <symbol id="i-next" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol>
+    <symbol id="i-replay" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></symbol>
+    <symbol id="i-play" viewBox="0 0 24 24"><path d="M7 4v16l13-8z"/></symbol>
+    <symbol id="i-pause" viewBox="0 0 24 24"><path d="M7 4h3v16H7zM14 4h3v16h-3z"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></symbol>
+  </defs>
+</svg>
+<script type="module" src="src/app.js"></script>
+</body>
+</html>
